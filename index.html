@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Three.js Basic</title>
+
+    <style>
+      body {
+        margin: 0px;
+				overflow: hidden;
+      }
+			h1 {
+				position: absolute;
+				color: "black";
+			}
+      canvas {
+        background: green;
+      }
+
+    </style>
+	</head>
+	<body>
+    <h1>My First 3D Website</h1>
+    <canvas id="myCanvas"></canvas>
+
+    <script src="three.js"></script>
+    <script src="OrbitControls.js"></script>
+
+    <script>
+
+			var raycaster = new THREE.Raycaster();
+			var mouse = new THREE.Vector2();
+			var INTERSECTED;
+
+      //RENDERER
+      var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
+      renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.setClearColor('black');
+
+      //SCENE
+      scene = new THREE.Scene();
+
+			//Go Board Group Creation
+			var goBoard = new THREE.Group();
+			//var goBoard = new THREE.Object3D;
+
+      //LIGHTING
+      var light = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(light);
+
+      var light1 = new THREE.PointLight(0xffffff, 0.5);
+      scene.add(light1);
+
+			var light2 = new THREE.PointLight(0xffffff, 0.8);
+      scene.add(light2);
+			light2.position.set(-150, -150, -500);
+
+      //CAMERA
+      camera = new THREE.PerspectiveCamera( 45.0, window.innerWidth / window.innerHeight, 0.1, 10000 );
+      camera.position.set( 0, 0, 600 );
+
+      //MOVEMENT CONTROLS
+      var controls = new THREE.OrbitControls( camera );
+      controls.target.set( 0, -100, -500 );
+      controls.update();
+
+      //CUBE
+      var geometry = new THREE.BoxGeometry(100, 100, 100);
+      var material = new THREE.MeshPhongMaterial({
+				color: 0xF3FFE2,
+				map: new THREE.TextureLoader().load('marbel.jpg'),
+				normalMap: new THREE.TextureLoader().load('marbel.jpg'),
+				specular: 'red'
+			});
+      var mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(-75, 0, -500);
+			goBoard.add( mesh );
+
+      //FLOOR
+      var geometry2 = new THREE.PlaneGeometry(500, 500);
+      var material2 = new THREE.MeshPhongMaterial({
+				color: 0xF3FFE2,
+				side: THREE.DoubleSide,
+				map: new THREE.TextureLoader().load('wood.jpg')
+			});
+      var mesh2 = new THREE.Mesh(geometry2, material2);
+      mesh2.position.set(0, -200, -500);
+      mesh2.rotation.x = degToRad(90);
+			goBoard.add( mesh2 );
+
+			//SPHERE
+      var geometry3 = new THREE.SphereGeometry(50, 20, 20);
+      var material3 = new THREE.MeshStandardMaterial({
+				color: 0xF3FFE2,
+				map: new THREE.TextureLoader().load('marbel.jpg'),
+				//roughness: 0.3,
+				//metalness: 0.01
+				roughness: 0.3,
+				metalness: 0.01
+			});
+      var mesh3 = new THREE.Mesh(geometry3, material3);
+      mesh3.position.set(75, 0, -500);
+			goBoard.add( mesh3 );
+
+			//Add GoBoard
+			scene.add(goBoard);
+
+			//SHADOWS
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFShadowMap;
+
+			var light3 = new THREE.SpotLight(0xFFFFFF, 4.0, 3000);
+			light3.position.y = 200;
+			light.target = mesh;
+
+			//SKYBOX
+			var geometrySky = new THREE.BoxGeometry(9000, 9000, 9000);
+			var skyMaterials =
+			[
+				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_ft.jpg" ), side: THREE.DoubleSide}),//front
+				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_bk.jpg" ), side: THREE.DoubleSide}),//back
+				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_up.jpg" ), side: THREE.DoubleSide}),//up
+				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_dn.jpg" ), side: THREE.DoubleSide}),//down
+				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_rt.jpg" ), side: THREE.DoubleSide}),//right
+				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_lf.jpg" ), side: THREE.DoubleSide})//left
+			]
+
+			var materialSky = new THREE.MeshFaceMaterial( skyMaterials );
+			var meshSky = new THREE.Mesh(geometrySky, materialSky);
+
+			meshSky.position.set(0, 0, 0);
+			scene.add(meshSky);
+
+			window.addEventListener( 'mousemove', onMouseMove, false );
+
+      //RENDER LOOP
+      requestAnimationFrame(render);
+
+      function render() {
+        mesh.rotation.x += 0.002;
+        mesh.rotation.y += 0.002;
+
+				// update the picking ray with the camera and mouse position
+				raycaster.setFromCamera( mouse, camera );
+
+				// calculate objects intersecting the picking ray
+				var intersects = raycaster.intersectObjects( goBoard.children );
+
+				//for ( var i = 0; i < intersects.length; i++ ) {
+					//console.log(intersects[ i ].object.material.color);
+					//intersects[ i ].object.material.color.set( 0xff0000 );
+				//}
+
+				if ( intersects.length > 0 ) {
+
+					if ( INTERSECTED != intersects[ 0 ].object ) {
+
+						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+						INTERSECTED = intersects[ 0 ].object;
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+						INTERSECTED.material.emissive.setHex( 0x262626);
+
+					}
+
+				} else {
+
+					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+					INTERSECTED = null;
+
+				}
+
+				renderer.render(scene, camera);
+        requestAnimationFrame(render);
+
+      }
+
+      function degToRad (numb) {
+        return numb * Math.PI / 180
+      }
+
+			function onMouseMove( event ) {
+
+				// calculate mouse position in normalized device coordinates
+				// (-1 to +1) for both components
+
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+			}
+
+    </script>
+  </body>
+</html>
