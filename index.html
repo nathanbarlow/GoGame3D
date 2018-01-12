@@ -198,12 +198,26 @@
 				metalness: 0.01
 			});
       var meshPiece = new THREE.Mesh(geometryPiece, materialPiece);
-      meshPiece.position.set(75, -199 + (lineSpacing * 0.3 / 2) / 2, -500);
-			goBoard.add( meshPiece );
+      meshPiece.position.set(75, -199 + 0.3 * (lineSpacing / 2), -500);
+			scene.add(meshPiece);
 
+			//TEST HIGHLIGHT
+			var selectorGroup = new THREE.Group();
+
+      var geometryHighlight = new THREE.CircleGeometry(lineSpacing / 2, 20);
+      var materialHighlight = new THREE.MeshLambertMaterial({
+				color: 0xFF99FFF,
+
+			});
+      var meshHighlight = new THREE.Mesh(geometryHighlight, materialHighlight);
+      meshHighlight.position.set(75, -199, -475);
+			meshHighlight.rotation.x = degToRad(-90);
+			selectorGroup.add( meshHighlight );
+			meshHighlight.visible = false;
 
 			//Add GoBoard
 			scene.add(goBoard);
+			scene.add(selectorGroup);
 
 			//SHADOWS
 			/*
@@ -235,23 +249,23 @@
 				raycaster.setFromCamera( mouse, camera );
 
 				// calculate objects intersecting the picking ray
-				var intersects = raycaster.intersectObjects( goLines.children );
+				var intersects = raycaster.intersectObjects( selectorGroup.children );
 
-				if ( intersects.length > 0 ) {
+				if ( intersects.length > 0 ) { //if objects are hovered over then do this
 
-					if ( INTERSECTED != intersects[ 0 ].object ) {
+					if ( INTERSECTED != intersects[ 0 ].object ) { //make INTERSECTED isn't already asigned to this object
 
-						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //Do if intersected not equal to null
 
-						INTERSECTED = intersects[ 0 ].object;
-						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-						INTERSECTED.material.emissive.setHex( 0x262626);
+						INTERSECTED = intersects[ 0 ].object; //set INTERSECTED to first object pointed at
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex(); //used to hold value of moused over object
+						INTERSECTED.material.emissive.setHex( 0x262626); //temporairily set value to this.
 
 					}
 
-				} else {
+				} else { //if nothing hovered over set INTERSECTED to null
 
-					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //used to reassign previous value
 
 					INTERSECTED = null;
 
