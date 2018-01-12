@@ -43,7 +43,6 @@
 
 			//Go Board Group Creation
 			var goBoard = new THREE.Group();
-			//var goBoard = new THREE.Object3D;
 
       //LIGHTING
       var light = new THREE.AmbientLight(0xffffff, 0.5);
@@ -77,17 +76,63 @@
       mesh.position.set(-75, 0, -500);
 			goBoard.add( mesh );
 
-      //FLOOR
-      var geometry2 = new THREE.PlaneGeometry(500, 500);
-      var material2 = new THREE.MeshPhongMaterial({
+      //GO BOARD BASE
+			var boardZ = 500;
+			var boardX = boardZ;
+			var boardY = 20;
+      var boardGeometry = new THREE.BoxGeometry(boardX, boardY, boardZ);
+      var boardMaterial = new THREE.MeshPhongMaterial({
 				color: 0xF3FFE2,
-				side: THREE.DoubleSide,
-				map: new THREE.TextureLoader().load('wood.jpg')
+				map: new THREE.TextureLoader().load('darkWood.jpg')
 			});
-      var mesh2 = new THREE.Mesh(geometry2, material2);
-      mesh2.position.set(0, -200, -500);
-      mesh2.rotation.x = degToRad(90);
-			goBoard.add( mesh2 );
+      var boardMesh = new THREE.Mesh(boardGeometry, boardMaterial);
+      boardMesh.position.set(0, -210, -500);
+			goBoard.add( boardMesh );
+
+			//GO BOARD TILES
+			var goTiles = new THREE.Group();
+			var rows = 9;
+			var columns = rows;
+			var tileSize = 42.22222;
+			//(boardZ - (tileBoarderWidth * 2) - (tileSpacing * (rows - 1))) / rows;
+			var tileSpacing = 5;
+			var tileBoarderWidth = 40;
+			var tileX, tileZ;
+			var tilesStartX = boardMesh.position.x - boardX / 2 + tileSize / 2 + tileBoarderWidth;
+			var tilesStartY = boardMesh.position.y + boardY / 2 + 1;
+			var tilesStartZ = boardMesh.position.z - boardZ / 2 + tileSize / 2 + tileBoarderWidth;
+			var tileTexture = new THREE.TextureLoader().load('wood.jpg');
+			//create columns
+			for ( var c = 0; c < columns; c++ ) {
+				//create rows
+				for ( var r = 0; r < columns; r++ ) {
+					//create geometry
+					var geometryTile = new THREE.PlaneGeometry(tileSize, tileSize);
+
+					//create material
+		      var materialTile = new THREE.MeshPhongMaterial({
+						color: 0xF3FFE2,
+						map: tileTexture
+					});
+
+					//create mesh
+					var meshTile = new THREE.Mesh(geometryTile, materialTile);
+
+					//rotate plan flat
+					meshTile.rotation.x = degToRad(-90);
+
+					//position tile
+					tileX = tilesStartX + r * tileSize + tileSpacing * r;
+					tileZ = tilesStartZ + c * tileSize + tileSpacing * c;
+					meshTile.position.set(tileX, tilesStartY, tileZ);
+					//add to tile group
+					goTiles.add( meshTile );
+					//scene.add( meshTile );
+				}
+			}
+
+			//add goTiles to scene
+			scene.add(goTiles);
 
 			//SPHERE
       var geometry3 = new THREE.SphereGeometry(50, 20, 20);
@@ -145,12 +190,7 @@
 				raycaster.setFromCamera( mouse, camera );
 
 				// calculate objects intersecting the picking ray
-				var intersects = raycaster.intersectObjects( goBoard.children );
-
-				//for ( var i = 0; i < intersects.length; i++ ) {
-					//console.log(intersects[ i ].object.material.color);
-					//intersects[ i ].object.material.color.set( 0xff0000 );
-				//}
+				var intersects = raycaster.intersectObjects( goTiles.children );
 
 				if ( intersects.length > 0 ) {
 
