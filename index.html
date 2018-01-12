@@ -48,12 +48,19 @@
       var light = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(light);
 
-      var light1 = new THREE.PointLight(0xffffff, 0.5);
+      var light1 = new THREE.PointLight(0xffffff, 0.8);
       scene.add(light1);
+			light1.position.set(500, 200, -500);
 
-			var light2 = new THREE.PointLight(0xffffff, 0.8);
+			var light2 = new THREE.PointLight(0xffffff, 0.5);
       scene.add(light2);
-			light2.position.set(-150, -150, -500);
+			light2.position.set(-500, 200, -500);
+
+			//SKYBOX
+			var textureCube = new THREE.CubeTextureLoader()
+					.setPath( 'skybox/')
+					.load( [ 'morning_ft.jpg', 'morning_bk.jpg', 'morning_up.jpg', 'morning_dn.jpg', 'morning_rt.jpg', 'morning_lf.jpg' ] );
+			scene.background = textureCube;
 
       //CAMERA
       camera = new THREE.PerspectiveCamera( 45.0, window.innerWidth / window.innerHeight, 0.1, 10000 );
@@ -61,7 +68,7 @@
 
       //MOVEMENT CONTROLS
       var controls = new THREE.OrbitControls( camera );
-      controls.target.set( 0, -100, -500 );
+      controls.target.set( 0, -200, -500 );
       controls.update();
 
       //CUBE
@@ -79,14 +86,19 @@
       //GO BOARD BASE
 			var boardZ = 500;
 			var boardX = boardZ;
-			var boardY = 20;
+			var boardY = 100;
       var boardGeometry = new THREE.BoxGeometry(boardX, boardY, boardZ);
-      var boardMaterial = new THREE.MeshPhongMaterial({
-				color: 0xF3FFE2,
-				map: new THREE.TextureLoader().load('darkWood.jpg')
+      var boardMaterial = new THREE.MeshLambertMaterial({
+				color: 0xffffff,
+				envMap: textureCube,
+				combine: THREE.MixOperation,
+				reflectivity: 0.4,
+				map: new THREE.TextureLoader().load('marbel.jpg'),
+				//bumpMap: new THREE.TextureLoader().load('marbel.jpg'),
+				//bumpScale: 1,
 			});
       var boardMesh = new THREE.Mesh(boardGeometry, boardMaterial);
-      boardMesh.position.set(0, -210, -500);
+      boardMesh.position.set(0, -200 - boardY / 2, -500);
 			goBoard.add( boardMesh );
 
 
@@ -105,13 +117,14 @@
 			var lineY;
 			var lineZ;
 
+			//lines material
 			var materialLine = new THREE.MeshStandardMaterial({
 				color: 0x000000,
-				roughness: 0.3,
+				roughness: 0.8,
 				metalness: 0.01
 			});
 
-			//ADD LINES
+			//create lines
 			for ( var c = 0; c < columns; c++ ) {
 				//add long lines
 				//add geometry
@@ -170,43 +183,49 @@
 				roughness: 0.3,
 				metalness: 0.01
 			});
-      var mesh3 = new THREE.Mesh(geometry3, material3);
+      var mesh3 = new THREE.Mesh(geometry3, boardMaterial);
       mesh3.position.set(75, 0, -500);
 			goBoard.add( mesh3 );
+
+
+			//DEFINE GAME PIECE
+      var geometryPiece = new THREE.SphereGeometry(lineSpacing / 2, 20, 20);
+			geometryPiece.scale(1, 0.3, 1);
+      var materialPiece = new THREE.MeshStandardMaterial({
+				color: 0x000000,
+				map: new THREE.TextureLoader().load('marbel.jpg'),
+				roughness: 0.3,
+				metalness: 0.01
+			});
+      var meshPiece = new THREE.Mesh(geometryPiece, materialPiece);
+      meshPiece.position.set(75, -199 + (lineSpacing * 0.3 / 2) / 2, -500);
+			goBoard.add( meshPiece );
+
 
 			//Add GoBoard
 			scene.add(goBoard);
 
 			//SHADOWS
+			/*
 			renderer.shadowMap.enabled = true;
 			renderer.shadowMap.type = THREE.PCFShadowMap;
 
 			var light3 = new THREE.SpotLight(0xFFFFFF, 4.0, 3000);
 			light3.position.y = 200;
 			light.target = mesh;
+			*/
 
-			//SKYBOX
-			var geometrySky = new THREE.BoxGeometry(9000, 9000, 9000);
-			var skyMaterials =
-			[
-				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_ft.jpg" ), side: THREE.DoubleSide}),//front
-				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_bk.jpg" ), side: THREE.DoubleSide}),//back
-				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_up.jpg" ), side: THREE.DoubleSide}),//up
-				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_dn.jpg" ), side: THREE.DoubleSide}),//down
-				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_rt.jpg" ), side: THREE.DoubleSide}),//right
-				new THREE.MeshBasicMaterial( {map: new THREE.TextureLoader().load( "skybox/morning_lf.jpg" ), side: THREE.DoubleSide})//left
-			]
 
-			var materialSky = new THREE.MeshFaceMaterial( skyMaterials );
-			var meshSky = new THREE.Mesh(geometrySky, materialSky);
-
-			meshSky.position.set(0, 0, 0);
-			scene.add(meshSky);
-
+			//ADD EVENT LISTENER
 			window.addEventListener( 'mousemove', onMouseMove, false );
 
       //RENDER LOOP
       requestAnimationFrame(render);
+
+			function addPiece (column, row) {
+				//TODO: write code to add a piece to the board.
+
+			}
 
       function render() {
         mesh.rotation.x += 0.002;
