@@ -89,50 +89,76 @@
       boardMesh.position.set(0, -210, -500);
 			goBoard.add( boardMesh );
 
-			//GO BOARD TILES
-			var goTiles = new THREE.Group();
-			var rows = 9;
+
+			//GO BOARD LINES
+			var goLines = new THREE.Group();
+			var rows = 19; //ADJUST
 			var columns = rows;
-			var tileSize = 42.22222;
-			//(boardZ - (tileBoarderWidth * 2) - (tileSpacing * (rows - 1))) / rows;
-			var tileSpacing = 5;
-			var tileBoarderWidth = 40;
-			var tileX, tileZ;
-			var tilesStartX = boardMesh.position.x - boardX / 2 + tileSize / 2 + tileBoarderWidth;
-			var tilesStartY = boardMesh.position.y + boardY / 2 + 1;
-			var tilesStartZ = boardMesh.position.z - boardZ / 2 + tileSize / 2 + tileBoarderWidth;
-			var tileTexture = new THREE.TextureLoader().load('wood.jpg');
-			//create columns
+			var lineWidth = 1; //ADJUST
+			var lineLengthLong = 450; //ADJUST
+			var lineSpacing = (lineLengthLong - lineWidth) / (rows - 1);
+			var lineLengthShort = lineSpacing - lineWidth;
+			var lineStartX = -225; //ADJUST
+			var lineStartY = -199; //ADJUST
+			var lineStartZ = -725; //ADJUST
+			var lineX;
+			var lineY;
+			var lineZ;
+
+			var materialLine = new THREE.MeshStandardMaterial({
+				color: 0x000000,
+				roughness: 0.3,
+				metalness: 0.01
+			});
+
+			//ADD LINES
 			for ( var c = 0; c < columns; c++ ) {
-				//create rows
-				for ( var r = 0; r < columns; r++ ) {
-					//create geometry
-					var geometryTile = new THREE.PlaneGeometry(tileSize, tileSize);
+				//add long lines
+				//add geometry
+				var geometryLine = new THREE.PlaneGeometry(lineWidth, lineLengthLong);
 
-					//create material
-		      var materialTile = new THREE.MeshPhongMaterial({
-						color: 0xF3FFE2,
-						map: tileTexture
-					});
+				//add mesh
+				var meshLine = new THREE.Mesh(geometryLine, materialLine);
 
-					//create mesh
-					var meshTile = new THREE.Mesh(geometryTile, materialTile);
+				//rotate plan flat
+				meshLine.rotation.x = degToRad(-90);
 
-					//rotate plan flat
-					meshTile.rotation.x = degToRad(-90);
+				//position mesh
+				lineX = lineStartX + lineWidth / 2 + lineSpacing * c;
+				lineY = lineStartY;
+				lineZ = lineStartZ + lineLengthLong / 2;
+				meshLine.position.set(lineX, lineY, lineZ);
 
-					//position tile
-					tileX = tilesStartX + r * tileSize + tileSpacing * r;
-					tileZ = tilesStartZ + c * tileSize + tileSpacing * c;
-					meshTile.position.set(tileX, tilesStartY, tileZ);
-					//add to tile group
-					goTiles.add( meshTile );
-					//scene.add( meshTile );
-				}
+				//add mesh to goLines group
+				goLines.add(meshLine);
+
+				//ADD SHORT LINES
+				//only short lines if this is not the last line
+				if (c < columns - 1) {
+					for ( var r = 0; r < rows; r++ ) {
+						//add geometry
+						var geometryLine = new THREE.PlaneGeometry(lineLengthShort, lineWidth);
+
+						//add mesh
+						var meshLine = new THREE.Mesh(geometryLine, materialLine);
+
+						//rotate plan flat
+						meshLine.rotation.x = degToRad(-90);
+
+						//position mesh
+						lineX = lineStartX + lineLengthShort / 2 + lineWidth + lineSpacing * c;
+						lineY = lineStartY;
+						lineZ = lineStartZ + lineWidth / 2 + lineSpacing * r;
+						meshLine.position.set(lineX, lineY, lineZ);
+
+						//add mesh to goLines group
+						goLines.add(meshLine);
+					}
+				};
 			}
 
-			//add goTiles to scene
-			scene.add(goTiles);
+			//add goLines to scene
+			scene.add(goLines);
 
 			//SPHERE
       var geometry3 = new THREE.SphereGeometry(50, 20, 20);
@@ -190,7 +216,7 @@
 				raycaster.setFromCamera( mouse, camera );
 
 				// calculate objects intersecting the picking ray
-				var intersects = raycaster.intersectObjects( goTiles.children );
+				var intersects = raycaster.intersectObjects( goLines.children );
 
 				if ( intersects.length > 0 ) {
 
