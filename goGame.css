@@ -1,0 +1,35 @@
+body {
+  margin: 0px;
+  overflow: hidden;
+}
+h1 {
+  color: "black";
+  text-align: center;
+}
+canvas {
+  background: green;
+}
+
+#over3D {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+}
+
+#menue {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 4vh;
+  background-color: rgba(242, 242, 242, 0.5);
+  max-width: 50vw;
+  height: 90vh;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: medium;
+  border-color: rgba(200, 200, 200, 0.5)
+}
+
+#menueContents {
+  padding-left: 3vw;
+  padding-right: 3vw;
+}
