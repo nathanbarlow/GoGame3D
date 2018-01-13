@@ -207,13 +207,17 @@
       var geometryHighlight = new THREE.CircleGeometry(lineSpacing / 2, 20);
       var materialHighlight = new THREE.MeshLambertMaterial({
 				color: 0xFF99FFF,
+				side: THREE.FrontSide,
+				transparent: true,
+				opacity: 0.0,
+				emissive: 0.5
 
 			});
       var meshHighlight = new THREE.Mesh(geometryHighlight, materialHighlight);
       meshHighlight.position.set(75, -199, -475);
 			meshHighlight.rotation.x = degToRad(-90);
 			selectorGroup.add( meshHighlight );
-			meshHighlight.visible = false;
+			meshHighlight.visible = true;
 
 			//Add GoBoard
 			scene.add(goBoard);
@@ -255,6 +259,26 @@
 
 					if ( INTERSECTED != intersects[ 0 ].object ) { //make INTERSECTED isn't already asigned to this object
 
+						if ( INTERSECTED ) INTERSECTED.material.opacity = INTERSECTED.currentOpacity ; //Do if intersected not equal to null
+
+						INTERSECTED = intersects[ 0 ].object; //set INTERSECTED to first object pointed at
+						INTERSECTED.currentOpacity = INTERSECTED.material.opacity; //used to hold value of moused over object
+						INTERSECTED.material.opacity = 0.5; //temporairily set value to this.
+
+					}
+
+				} else { //if nothing hovered over set INTERSECTED to null
+
+					if ( INTERSECTED ) INTERSECTED.material.opacity = INTERSECTED.currentOpacity; //used to reassign previous value
+
+					INTERSECTED = null;
+
+				}
+				/*
+				if ( intersects.length > 0 ) { //if objects are hovered over then do this
+
+					if ( INTERSECTED != intersects[ 0 ].object ) { //make INTERSECTED isn't already asigned to this object
+
 						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //Do if intersected not equal to null
 
 						INTERSECTED = intersects[ 0 ].object; //set INTERSECTED to first object pointed at
@@ -270,7 +294,7 @@
 					INTERSECTED = null;
 
 				}
-
+				*/
 				renderer.render(scene, camera);
         requestAnimationFrame(render);
 
