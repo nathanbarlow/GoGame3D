@@ -325,5 +325,12 @@ function playButtonPressed () {
   controls.update();
 
   //HIDE MENUE
-  
+  document.getElementById("menue").style.visibility = "hidden"
+
+  //MOVE CAMERA
+  camera.position.x = 0;
+  camera.position.z = 500;
+  camera.lookAt( 0, -200, -500 );
+  //TODO: gradually move camera to position
+  //Add borad size selection
 }
