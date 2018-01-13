@@ -27,7 +27,7 @@
     <script src="OrbitControls.js"></script>
 
     <script>
-
+		
 			var raycaster = new THREE.Raycaster();
 			var mouse = new THREE.Vector2();
 			var INTERSECTED;
@@ -205,7 +205,8 @@
 			function addPiece (x, z, radius, colorHex, group) {
 				//DEFINE GAME PIECE
 				var geometryPiece = new THREE.SphereGeometry(radius, 20, 20);
-				geometryPiece.scale(1, 0.3, 1);
+				var zScale = 0.2;
+				geometryPiece.scale(1, zScale, 1);
 				var materialPiece = new THREE.MeshStandardMaterial({
 					color: colorHex,
 					map: marbelTex,
@@ -213,7 +214,7 @@
 					metalness: 0.01
 				});
 				var meshPiece = new THREE.Mesh(geometryPiece, materialPiece);
-				meshPiece.position.set(x, -199 + 0.3 * (lineSpacing / 2), z);
+				meshPiece.position.set(x, -198 + zScale * (lineSpacing / 2), z);
 				group.add(meshPiece);
 			}
 
