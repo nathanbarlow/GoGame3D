@@ -2,7 +2,8 @@
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
 var INTERSECTED;
-var elapsedFrames = 600;
+var elapsedFrames = 900;
+var inPlay = false //variable that switches from menue to play
 
 //RENDERER
 var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
@@ -46,10 +47,12 @@ scene.background = textureCube;
 camera = new THREE.PerspectiveCamera( 45.0, window.innerWidth / window.innerHeight, 0.1, 10000 );
 camera.position.set( -100, 0, 500 );
 
+/*
 //MOVEMENT CONTROLS
 var controls = new THREE.OrbitControls( camera );
 controls.target.set( 0, -200, -500 );
 controls.update();
+*/
 
 //GO BOARD BASE
 var boardZ = 500;
@@ -170,6 +173,7 @@ light.target = mesh;
 //ADD EVENT LISTENERs
 window.addEventListener( 'mousemove', onMouseMove, false );
 document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+document.getElementById("playButton").addEventListener( 'mousedown', playButtonPressed, false )
 
 //RENDER LOOP
 requestAnimationFrame(render);
@@ -210,54 +214,58 @@ function onDocumentMouseDown (element) {
 	//on click send out ray from camera and check to see if it hits one of the
 	//items in group selectorGroup
 	element.preventDefault();
+  if(inPlay == true) {
+    // update the picking ray with the camera and mouse position
+  	raycaster.setFromCamera( mouse, camera );
 
-	// update the picking ray with the camera and mouse position
-	raycaster.setFromCamera( mouse, camera );
+  	//FOR REMOVING PIECE FROM BOARD
+  	var intersects = raycaster.intersectObjects( goPiecesGroup.children );
+  	if ( intersects.length > 0 ) {
+  		INTERSECTED = intersects[ 0 ].object;
+  		goPiecesGroup.remove(INTERSECTED);
 
-	//FOR REMOVING PIECE FROM BOARD
-	var intersects = raycaster.intersectObjects( goPiecesGroup.children );
-	if ( intersects.length > 0 ) {
-		INTERSECTED = intersects[ 0 ].object;
-		goPiecesGroup.remove(INTERSECTED);
+  		//Add selection Spot in place of Tile
+  		addSelectionSpot(INTERSECTED.position.x, -198, INTERSECTED.position.z, selectorGroup, lineSpacing / 2);
+  	};
 
-		//Add selection Spot in place of Tile
-		addSelectionSpot(INTERSECTED.position.x, -198, INTERSECTED.position.z, selectorGroup, lineSpacing / 2);
-	};
+  	//FOR ADDING PIECE TO BOARD
+  	var intersects = raycaster.intersectObjects( selectorGroup.children );
+  	if ( intersects.length > 0 ) {
+  	//Do this on click of object within selectorGroup
+  		INTERSECTED = intersects[ 0 ].object;
 
-	//FOR ADDING PIECE TO BOARD
-	var intersects = raycaster.intersectObjects( selectorGroup.children );
-	if ( intersects.length > 0 ) {
-	//Do this on click of object within selectorGroup
-		INTERSECTED = intersects[ 0 ].object;
+  		//add piece to board
+  		addPiece(
+          INTERSECTED.position.x,
+          INTERSECTED.position.z,
+          lineSpacing / 2.3,
+          colorTracker,
+          goPiecesGroup
+      );
 
-		//add piece to board
-		addPiece(
-        INTERSECTED.position.x,
-        INTERSECTED.position.z,
-        lineSpacing / 2.3,
-        colorTracker,
-        goPiecesGroup
-    );
+  		//Togle between white and black color
+  		if (colorTracker == 0x000000){
+  			colorTracker = 0xffffff;
+  		} else {
+  			colorTracker = 0x000000;
+  		};
 
-		//Togle between white and black color
-		if (colorTracker == 0x000000){
-			colorTracker = 0xffffff;
-		} else {
-			colorTracker = 0x000000;
-		};
-
-		//Remove selector spot from board
-		selectorGroup.remove(INTERSECTED);
-	};
+  		//Remove selector spot from board
+  		selectorGroup.remove(INTERSECTED);
+  	};
+  };
 }
 
 function render() {
 
-  var rotationSpeed = 0.003;
-  camera.lookAt( 0, -200, -500 );
-  camera.position.x = 0+ 1200 * Math.cos( rotationSpeed * elapsedFrames );
-  camera.position.z = -500 + 1200 * Math.sin( rotationSpeed * elapsedFrames );
-  elapsedFrames += 1;
+  if(inPlay == false) {
+    var rotationSpeed = 0.002;
+    camera.lookAt( 0, -200, -500 );
+    camera.position.x = 0+ 1200 * Math.cos( rotationSpeed * elapsedFrames );
+    camera.position.z = -500 + 1200 * Math.sin( rotationSpeed * elapsedFrames );
+    elapsedFrames += 1;
+  };
+
 
 
 	renderer.render(scene, camera);
@@ -277,30 +285,45 @@ function onMouseMove( event ) {
 	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-	//UPDATE SELECTION
-	// update the picking ray with the camera and mouse position
-	raycaster.setFromCamera( mouse, camera );
+  if(inPlay == true) {
+    //UPDATE SELECTION
+  	// update the picking ray with the camera and mouse position
+  	raycaster.setFromCamera( mouse, camera );
 
-	// calculate objects intersecting the picking ray
-	var intersects = raycaster.intersectObjects( selectorGroup.children );
+  	// calculate objects intersecting the picking ray
+  	var intersects = raycaster.intersectObjects( selectorGroup.children );
 
-	if ( intersects.length > 0 ) { //if objects are hovered over then do this
+  	if ( intersects.length > 0 ) { //if objects are hovered over then do this
 
-		if ( INTERSECTED != intersects[ 0 ].object ) { //make INTERSECTED isn't already asigned to this object
+  		if ( INTERSECTED != intersects[ 0 ].object ) { //make INTERSECTED isn't already asigned to this object
 
-			if ( INTERSECTED ) INTERSECTED.material.opacity = INTERSECTED.currentOpacity ; //Do if intersected not equal to null
+  			if ( INTERSECTED ) INTERSECTED.material.opacity = INTERSECTED.currentOpacity ; //Do if intersected not equal to null
 
-			INTERSECTED = intersects[ 0 ].object; //set INTERSECTED to first object pointed at
-			INTERSECTED.currentOpacity = INTERSECTED.material.opacity; //used to hold value of moused over object
-			INTERSECTED.material.opacity = 0.7; //temporairily set value to this.
+  			INTERSECTED = intersects[ 0 ].object; //set INTERSECTED to first object pointed at
+  			INTERSECTED.currentOpacity = INTERSECTED.material.opacity; //used to hold value of moused over object
+  			INTERSECTED.material.opacity = 0.7; //temporairily set value to this.
 
-		}
+  		}
 
-	} else { //if nothing hovered over set INTERSECTED to null
+  	} else { //if nothing hovered over set INTERSECTED to null
 
-		if ( INTERSECTED ) INTERSECTED.material.opacity = INTERSECTED.currentOpacity; //used to reassign previous value
+  		if ( INTERSECTED ) INTERSECTED.material.opacity = INTERSECTED.currentOpacity; //used to reassign previous value
 
-		INTERSECTED = null;
+  		INTERSECTED = null;
 
-	}
+  	}
+  };
+}
+
+function playButtonPressed () {
+  //UPDATE VARIABLE
+  inPlay = true;
+
+  //ADD MOVEMENT CONTROLS
+  var controls = new THREE.OrbitControls( camera );
+  controls.target.set( 0, -200, -500 );
+  controls.update();
+
+  //HIDE MENUE
+  
 }
