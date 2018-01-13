@@ -5,6 +5,11 @@ var INTERSECTED;
 var elapsedFrames = 900;
 var inPlay = false //variable that switches from menue to play
 
+var transitionCamera = false;
+var transitionLocation = new THREE.Vector3();
+var transitionSpeed = 20;
+var transitionCameraTarget = new THREE.Vector3( 0, -200, -500 );
+
 //RENDERER
 var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
 renderer.setPixelRatio( window.devicePixelRatio );
@@ -266,7 +271,13 @@ function render() {
     elapsedFrames += 1;
   };
 
-
+  if(transitionCamera == true) {
+    graduallyMoveCamera(
+      camera,
+      transitionLocation,
+      transitionCameraTarget,
+      transitionSpeed);
+  };
 
 	renderer.render(scene, camera);
   requestAnimationFrame(render);
@@ -319,18 +330,39 @@ function playButtonPressed () {
   //UPDATE VARIABLE
   inPlay = true;
 
-  //ADD MOVEMENT CONTROLS
-  var controls = new THREE.OrbitControls( camera );
-  controls.target.set( 0, -200, -500 );
-  controls.update();
-
   //HIDE MENUE
   document.getElementById("menue").style.visibility = "hidden"
 
   //MOVE CAMERA
-  camera.position.x = 0;
-  camera.position.z = 500;
-  camera.lookAt( 0, -200, -500 );
-  //TODO: gradually move camera to position
-  //Add borad size selection
+  transitionLocation.set( 500, 0, 0 );
+  console.log (transitionLocation.x);
+  transitionCamera = true;
+}
+
+function graduallyMoveCamera (camera, location, target, distancePerFrame) {
+  //decrease or increase each vector by distancePerFrame until the
+  //cameras position = the location specified.
+
+  if (Math.abs(camera.position.x - location.x) <= distancePerFrame){
+    //if the distance to the location is less or equal to the distancePerFrame than
+    //set the camera position to the location's position
+    camera.position.x = location.x;
+  } else if (camera.position.x < location.x) {
+    camera.position.x += distancePerFrame;
+  } else if (camera.position.x > location.x) {
+    camera.position.x -= distancePerFrame;
+  };
+
+  //SET CAMERA FACING
+  camera.lookAt( target );
+
+  //ONCE CAMERA POSITION = LOCATION POSITION FLIP transitionCamera VARIABLE
+  if (camera.position.x == location.x) {
+    transitionCamera = false;
+
+    //ADD MOVEMENT CONTROLS
+    var controls = new THREE.OrbitControls( camera );
+    controls.target.set( 0, -200, -500 );
+    controls.update();
+  };
 }
