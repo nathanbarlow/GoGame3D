@@ -41,8 +41,16 @@
       //SCENE
       scene = new THREE.Scene();
 
-			//Go Board Group Creation
+			//GROUP CREATION
 			var goBoard = new THREE.Group();
+			var selectorGroup = new THREE.Group();
+			var goPiecesGroup = new THREE.Group();
+
+			//COLOR TRACKER
+			var colorTracker = 0x000000;
+
+			//DEFINE TEXTURES
+			var marbelTex = new THREE.TextureLoader().load('marbel.jpg');
 
       //LIGHTING
       var light = new THREE.AmbientLight(0xffffff, 0.5);
@@ -71,18 +79,6 @@
       controls.target.set( 0, -200, -500 );
       controls.update();
 
-      //CUBE
-      var geometry = new THREE.BoxGeometry(100, 100, 100);
-      var material = new THREE.MeshPhongMaterial({
-				color: 0xF3FFE2,
-				map: new THREE.TextureLoader().load('marbel.jpg'),
-				normalMap: new THREE.TextureLoader().load('marbel.jpg'),
-				specular: 'red'
-			});
-      var mesh = new THREE.Mesh(geometry, material);
-      mesh.position.set(-75, 0, -500);
-			goBoard.add( mesh );
-
       //GO BOARD BASE
 			var boardZ = 500;
 			var boardX = boardZ;
@@ -104,7 +100,7 @@
 
 			//GO BOARD LINES
 			var goLines = new THREE.Group();
-			var rows = 19; //ADJUST
+			var rows = 9; //ADJUST
 			var columns = rows;
 			var lineWidth = 1; //ADJUST
 			var lineLengthLong = 450; //ADJUST
@@ -116,6 +112,8 @@
 			var lineX;
 			var lineY;
 			var lineZ;
+			var selectionSpotX;
+			var selectionSpotZ;
 
 			//lines material
 			var materialLine = new THREE.MeshStandardMaterial({
@@ -145,6 +143,14 @@
 				//add mesh to goLines group
 				goLines.add(meshLine);
 
+				//ADD SELECTION POINTS
+				for ( var r = 0; r < rows; r++ ) {
+					//r and c
+					selectionSpotX = lineStartX + lineWidth / 2 + lineSpacing * c;
+					selectionSpotZ = lineStartZ + lineWidth / 2 + lineSpacing * r;
+					addSelectionSpot(selectionSpotX, -198, selectionSpotZ, selectorGroup, lineSpacing / 2);
+				}
+
 				//ADD SHORT LINES
 				//only short lines if this is not the last line
 				if (c < columns - 1) {
@@ -173,55 +179,10 @@
 			//add goLines to scene
 			scene.add(goLines);
 
-			//SPHERE
-      var geometry3 = new THREE.SphereGeometry(50, 20, 20);
-      var material3 = new THREE.MeshStandardMaterial({
-				color: 0xF3FFE2,
-				map: new THREE.TextureLoader().load('marbel.jpg'),
-				//roughness: 0.3,
-				//metalness: 0.01
-				roughness: 0.3,
-				metalness: 0.01
-			});
-      var mesh3 = new THREE.Mesh(geometry3, boardMaterial);
-      mesh3.position.set(75, 0, -500);
-			goBoard.add( mesh3 );
-
-
-			//DEFINE GAME PIECE
-      var geometryPiece = new THREE.SphereGeometry(lineSpacing / 2, 20, 20);
-			geometryPiece.scale(1, 0.3, 1);
-      var materialPiece = new THREE.MeshStandardMaterial({
-				color: 0x000000,
-				map: new THREE.TextureLoader().load('marbel.jpg'),
-				roughness: 0.3,
-				metalness: 0.01
-			});
-      var meshPiece = new THREE.Mesh(geometryPiece, materialPiece);
-      meshPiece.position.set(75, -199 + 0.3 * (lineSpacing / 2), -500);
-			scene.add(meshPiece);
-
-			//TEST HIGHLIGHT
-			var selectorGroup = new THREE.Group();
-
-      var geometryHighlight = new THREE.CircleGeometry(lineSpacing / 2, 20);
-      var materialHighlight = new THREE.MeshLambertMaterial({
-				color: 0xFF99FFF,
-				side: THREE.FrontSide,
-				transparent: true,
-				opacity: 0.0,
-				emissive: 0.5
-
-			});
-      var meshHighlight = new THREE.Mesh(geometryHighlight, materialHighlight);
-      meshHighlight.position.set(75, -199, -475);
-			meshHighlight.rotation.x = degToRad(-90);
-			selectorGroup.add( meshHighlight );
-			meshHighlight.visible = true;
-
-			//Add GoBoard
+			//Add GROUPS TO SCENE
 			scene.add(goBoard);
 			scene.add(selectorGroup);
+			scene.add(goPiecesGroup);
 
 			//SHADOWS
 			/*
@@ -234,21 +195,84 @@
 			*/
 
 
-			//ADD EVENT LISTENER
+			//ADD EVENT LISTENERs
 			window.addEventListener( 'mousemove', onMouseMove, false );
+			document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 
       //RENDER LOOP
       requestAnimationFrame(render);
 
-			function addPiece (column, row) {
-				//TODO: write code to add a piece to the board.
+			function addPiece (x, z, radius, colorHex, group) {
+				//DEFINE GAME PIECE
+				var geometryPiece = new THREE.SphereGeometry(radius, 20, 20);
+				geometryPiece.scale(1, 0.3, 1);
+				var materialPiece = new THREE.MeshStandardMaterial({
+					color: colorHex,
+					map: marbelTex,
+					roughness: 0.3,
+					metalness: 0.01
+				});
+				var meshPiece = new THREE.Mesh(geometryPiece, materialPiece);
+				meshPiece.position.set(x, -199 + 0.3 * (lineSpacing / 2), z);
+				group.add(meshPiece);
+			}
 
+			function addSelectionSpot (x, y, z, group, radius){
+				var geometryHighlight = new THREE.CircleGeometry(lineSpacing / 2, 20);
+	      var materialHighlight = new THREE.MeshLambertMaterial({
+					color: 0xb3e6ff,
+					side: THREE.FrontSide,
+					transparent: true,
+					opacity: 0.0,
+					emissive: 0.5
+
+				});
+	      var meshHighlight = new THREE.Mesh(geometryHighlight, materialHighlight);
+	      meshHighlight.position.set(x, y, z);
+				meshHighlight.rotation.x = degToRad(-90);
+				group.add( meshHighlight );
+			}
+
+			function onDocumentMouseDown (element) {
+				//on click send out ray from camera and check to see if it hits one of the
+				//items in group selectorGroup
+				element.preventDefault();
+
+				// update the picking ray with the camera and mouse position
+				raycaster.setFromCamera( mouse, camera );
+
+				//FOR REMOVING PIECE FROM BOARD
+				var intersects = raycaster.intersectObjects( goPiecesGroup.children );
+				if ( intersects.length > 0 ) {
+					INTERSECTED = intersects[ 0 ].object;
+					goPiecesGroup.remove(INTERSECTED);
+
+					//Add selection Spot in place of Tile
+					addSelectionSpot(INTERSECTED.position.x, -198, INTERSECTED.position.z, selectorGroup, lineSpacing / 2);
+				};
+
+				//FOR ADDING PIECE TO BOARD
+				var intersects = raycaster.intersectObjects( selectorGroup.children );
+				if ( intersects.length > 0 ) {
+					//Do this on click of object within selectorGroup
+					INTERSECTED = intersects[ 0 ].object;
+
+					//add piece to board
+					addPiece( INTERSECTED.position.x, INTERSECTED.position.z, lineSpacing / 2.3, colorTracker, goPiecesGroup);
+
+					//Togle between white and black color
+					if (colorTracker == 0x000000){
+						colorTracker = 0xffffff;
+					} else {
+						colorTracker = 0x000000;
+					};
+
+					//Remove selector spot from board
+					selectorGroup.remove(INTERSECTED);
+				};
 			}
 
       function render() {
-        mesh.rotation.x += 0.002;
-        mesh.rotation.y += 0.002;
-
 				// update the picking ray with the camera and mouse position
 				raycaster.setFromCamera( mouse, camera );
 
@@ -263,7 +287,7 @@
 
 						INTERSECTED = intersects[ 0 ].object; //set INTERSECTED to first object pointed at
 						INTERSECTED.currentOpacity = INTERSECTED.material.opacity; //used to hold value of moused over object
-						INTERSECTED.material.opacity = 0.5; //temporairily set value to this.
+						INTERSECTED.material.opacity = 0.7; //temporairily set value to this.
 
 					}
 
@@ -274,27 +298,7 @@
 					INTERSECTED = null;
 
 				}
-				/*
-				if ( intersects.length > 0 ) { //if objects are hovered over then do this
 
-					if ( INTERSECTED != intersects[ 0 ].object ) { //make INTERSECTED isn't already asigned to this object
-
-						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //Do if intersected not equal to null
-
-						INTERSECTED = intersects[ 0 ].object; //set INTERSECTED to first object pointed at
-						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex(); //used to hold value of moused over object
-						INTERSECTED.material.emissive.setHex( 0x262626); //temporairily set value to this.
-
-					}
-
-				} else { //if nothing hovered over set INTERSECTED to null
-
-					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex ); //used to reassign previous value
-
-					INTERSECTED = null;
-
-				}
-				*/
 				renderer.render(scene, camera);
         requestAnimationFrame(render);
 
