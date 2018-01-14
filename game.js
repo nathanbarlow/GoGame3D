@@ -4,10 +4,11 @@ var mouse = new THREE.Vector2();
 var INTERSECTED;
 var elapsedFrames = 900;
 var inPlay = false //variable that switches from menue to play
+var frameCount = 0;
 
 var transitionCamera = false;
 var transitionLocation = new THREE.Vector3();
-var transitionSpeed = 20;
+var transitionSpeed = 0.02;
 var transitionCameraTarget = new THREE.Vector3( 0, -200, -500 );
 
 //RENDERER
@@ -279,6 +280,13 @@ function render() {
       transitionSpeed);
   };
 
+  frameCount += 1
+  if (frameCount == 30) {
+    console.log(camera.position);
+    frameCount = 0;
+  }
+
+
 	renderer.render(scene, camera);
   requestAnimationFrame(render);
 
@@ -334,30 +342,58 @@ function playButtonPressed () {
   document.getElementById("menue").style.visibility = "hidden"
 
   //MOVE CAMERA
-  transitionLocation.set( 500, 0, 0 );
-  console.log (transitionLocation.x);
+  transitionLocation.set( -700 , 200, -500 );
   transitionCamera = true;
 }
 
-function graduallyMoveCamera (camera, location, target, distancePerFrame) {
-  //decrease or increase each vector by distancePerFrame until the
+function graduallyMoveCamera (camera, location, target, percentDistPerFrame) {
+  //decrease or increase each vector by percentDistPerFrame until the
   //cameras position = the location specified.
 
-  if (Math.abs(camera.position.x - location.x) <= distancePerFrame){
-    //if the distance to the location is less or equal to the distancePerFrame than
+  //write distance as percentage of total
+
+  var topSpeed = 15;
+  var minSpeed = 2;
+  var cutoff = 3;
+  var movementX = Math.max(Math.min(topSpeed, (Math.abs(camera.position.x - location.x)) * percentDistPerFrame), minSpeed);
+  if (Math.abs(camera.position.x - location.x) <= cutoff){
+    //if the distance to the location is less or equal to the percentDistPerFrame than
     //set the camera position to the location's position
     camera.position.x = location.x;
   } else if (camera.position.x < location.x) {
-    camera.position.x += distancePerFrame;
+    camera.position.x += movementX;
   } else if (camera.position.x > location.x) {
-    camera.position.x -= distancePerFrame;
+    camera.position.x -= movementX;
   };
+
+  var movementY = Math.max(Math.min(topSpeed, (Math.abs(camera.position.y - location.y)) * percentDistPerFrame), minSpeed);
+  if (Math.abs(camera.position.y - location.y) <= cutoff){
+    //if the distance to the location is less or equal to the percentDistPerFrame than
+    //set the camera position to the location's position
+    camera.position.y = location.y;
+  } else if (camera.position.y < location.y) {
+    camera.position.y += movementY;
+  } else if (camera.position.y > location.y) {
+    camera.position.y -= movementY;
+  };
+
+  var movementZ = Math.max(Math.min(topSpeed, (Math.abs(camera.position.z - location.z)) * percentDistPerFrame), minSpeed);
+  if (Math.abs(camera.position.z - location.z) <= cutoff){
+    //if the distance to the location is less or equal to the percentDistPerFrame than
+    //set the camera position to the location's position
+    camera.position.z = location.z;
+  } else if (camera.position.z < location.z) {
+    camera.position.z += movementZ;
+  } else if (camera.position.z > location.z) {
+    camera.position.z -= movementZ;
+  };
+
 
   //SET CAMERA FACING
   camera.lookAt( target );
 
   //ONCE CAMERA POSITION = LOCATION POSITION FLIP transitionCamera VARIABLE
-  if (camera.position.x == location.x) {
+  if (camera.position.x == location.x && camera.position.y == location.y && camera.position.z == location.z) {
     transitionCamera = false;
 
     //ADD MOVEMENT CONTROLS
