@@ -54,7 +54,7 @@ camera = new THREE.PerspectiveCamera( 45.0, window.innerWidth / window.innerHeig
 camera.position.set( -100, 0, 500 );
 
 //ADD MOVEMENT CONTROLS
-var controls = new THREE.OrbitControls( camera );
+var controls = null;
 // controls.target.set( 0, -200, -500 );
 // controls.update();
 // controls.enabled = false;
@@ -181,6 +181,8 @@ window.addEventListener( 'mousemove', onMouseMove, false );
 document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 document.getElementById("playButton").addEventListener( 'mousedown', playButtonPressed, false );
 document.getElementById("ViewTopBtn").addEventListener( 'mousedown', viewTop, false );
+document.getElementById("ResetGameBtn").addEventListener( 'mousedown', resetGame, false );
+document.getElementById("ResetCameraBtn").addEventListener( 'mousedown', resetCamera, false );
 
 //RENDER LOOP
 requestAnimationFrame(render);
@@ -207,11 +209,11 @@ function render() {
   };
 
   //write the cameras position to the console every 30 frames
-  frameCount += 1
-  if (frameCount == 30) {
-    console.log(camera.position);
-    frameCount = 0;
-  }
+  // frameCount += 1
+  // if (frameCount == 30) {
+  //   console.log(camera.position);
+  //   frameCount = 0;
+  // }
 
   //Render scene
 	renderer.render(scene, camera);
@@ -343,7 +345,8 @@ function playButtonPressed () {
   inPlay = true;
 
   //HIDE MENUE
-  document.getElementById("menue").style.visibility = "hidden"
+  document.getElementById("menue").style.visibility = "hidden";
+  document.getElementById("inGameMenueContainer").style.visibility = "visible";
 
   //MOVE CAMERA
   transitionLocation.set( -700 , 200, -500 );
@@ -418,5 +421,25 @@ function viewTop () {
   //MOVE CAMERA
   controls.target.set( 0, -200, -500 );
   transitionLocation.set( -92 , 600, -500 );
+  transitionCamera = true;
+}
+
+function resetGame () {
+  //delete pieces
+  var pieces = goPiecesGroup.children;
+  while (pieces.length > 0) {
+    goPiecesGroup.remove(pieces[0]);
+  }
+
+  //Move Camera to starting position
+  controls.target.set( 0, -200, -500 );
+  transitionLocation.set( -700 , 200, -500 );
+  transitionCamera = true;
+}
+
+function resetCamera () {
+  //Move Camera to starting position
+  controls.target.set( 0, -200, -500 );
+  transitionLocation.set( -700 , 200, -500 );
   transitionCamera = true;
 }

@@ -59,6 +59,7 @@ canvas {
 /*---------------- CSS for inGameMenue-----------*/
 
 #inGameMenueContainer {
+  visibility: hidden;
   cursor: pointer;
   position: absolute;
   right: 1vw;
