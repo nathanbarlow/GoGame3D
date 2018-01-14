@@ -8,7 +8,7 @@ var frameCount = 0;
 
 var transitionCamera = false;
 var transitionLocation = new THREE.Vector3();
-var transitionSpeed = 0.02;
+var transitionSpeed = 0.03;
 var transitionCameraTarget = new THREE.Vector3( 0, -200, -500 );
 
 //RENDERER
@@ -53,12 +53,12 @@ scene.background = textureCube;
 camera = new THREE.PerspectiveCamera( 45.0, window.innerWidth / window.innerHeight, 0.1, 10000 );
 camera.position.set( -100, 0, 500 );
 
-/*
-//MOVEMENT CONTROLS
+//ADD MOVEMENT CONTROLS
 var controls = new THREE.OrbitControls( camera );
-controls.target.set( 0, -200, -500 );
-controls.update();
-*/
+// controls.target.set( 0, -200, -500 );
+// controls.update();
+// controls.enabled = false;
+
 
 //GO BOARD BASE
 var boardZ = 500;
@@ -179,11 +179,45 @@ light.target = mesh;
 //ADD EVENT LISTENERs
 window.addEventListener( 'mousemove', onMouseMove, false );
 document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-document.getElementById("playButton").addEventListener( 'mousedown', playButtonPressed, false )
+document.getElementById("playButton").addEventListener( 'mousedown', playButtonPressed, false );
+document.getElementById("ViewTopBtn").addEventListener( 'mousedown', viewTop, false );
 
 //RENDER LOOP
 requestAnimationFrame(render);
 
+function render() {
+
+  //Rotate arround the board when not in play
+  if(inPlay == false) {
+    var rotationSpeed = 0.002;
+    camera.lookAt( 0, -200, -500 );
+    camera.position.x = 0+ 1200 * Math.cos( rotationSpeed * elapsedFrames );
+    camera.position.z = -500 + 1200 * Math.sin( rotationSpeed * elapsedFrames );
+    elapsedFrames += 1;
+  };
+
+  //Transition Camera OR Allow movement controls
+  if(transitionCamera == true) {
+    //call function to move camera in to position
+    graduallyMoveCamera(
+      camera,
+      transitionLocation,
+      transitionCameraTarget,
+      transitionSpeed);
+  };
+
+  //write the cameras position to the console every 30 frames
+  frameCount += 1
+  if (frameCount == 30) {
+    console.log(camera.position);
+    frameCount = 0;
+  }
+
+  //Render scene
+	renderer.render(scene, camera);
+  requestAnimationFrame(render);
+
+}
 function addPiece (x, z, radius, colorHex, group) {
   //DEFINE GAME PIECE
 	var geometryPiece = new THREE.SphereGeometry(radius, 20, 20);
@@ -262,36 +296,6 @@ function onDocumentMouseDown (element) {
   };
 }
 
-function render() {
-
-  if(inPlay == false) {
-    var rotationSpeed = 0.002;
-    camera.lookAt( 0, -200, -500 );
-    camera.position.x = 0+ 1200 * Math.cos( rotationSpeed * elapsedFrames );
-    camera.position.z = -500 + 1200 * Math.sin( rotationSpeed * elapsedFrames );
-    elapsedFrames += 1;
-  };
-
-  if(transitionCamera == true) {
-    graduallyMoveCamera(
-      camera,
-      transitionLocation,
-      transitionCameraTarget,
-      transitionSpeed);
-  };
-
-  frameCount += 1
-  if (frameCount == 30) {
-    console.log(camera.position);
-    frameCount = 0;
-  }
-
-
-	renderer.render(scene, camera);
-  requestAnimationFrame(render);
-
-}
-
 function degToRad (numb) {
   return numb * Math.PI / 180
 }
@@ -350,10 +354,16 @@ function graduallyMoveCamera (camera, location, target, percentDistPerFrame) {
   //decrease or increase each vector by percentDistPerFrame until the
   //cameras position = the location specified.
 
+  //turn off movement controls
+  if (controls != null){
+    controls.enabled = false;
+    controls = null;
+  };
+
   //write distance as percentage of total
 
   var topSpeed = 15;
-  var minSpeed = 2;
+  var minSpeed = 3;
   var cutoff = 3;
   var movementX = Math.max(Math.min(topSpeed, (Math.abs(camera.position.x - location.x)) * percentDistPerFrame), minSpeed);
   if (Math.abs(camera.position.x - location.x) <= cutoff){
@@ -397,8 +407,16 @@ function graduallyMoveCamera (camera, location, target, percentDistPerFrame) {
     transitionCamera = false;
 
     //ADD MOVEMENT CONTROLS
-    var controls = new THREE.OrbitControls( camera );
+    controls = new THREE.OrbitControls( camera );
     controls.target.set( 0, -200, -500 );
     controls.update();
+    controls.enabled = true;
   };
+}
+
+function viewTop () {
+  //MOVE CAMERA
+  controls.target.set( 0, -200, -500 );
+  transitionLocation.set( -92 , 600, -500 );
+  transitionCamera = true;
 }
