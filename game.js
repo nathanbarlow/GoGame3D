@@ -3,7 +3,7 @@ var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
 var INTERSECTED;
 var elapsedFrames = 900;
-var inPlay = false //variable that switches from menue to play
+var inPlay = false //variable that switches from menu to play
 var frameCount = 0;
 
 var transitionCamera = false;
@@ -344,9 +344,9 @@ function playButtonPressed () {
   //UPDATE VARIABLE
   inPlay = true;
 
-  //HIDE MENUE
-  document.getElementById("menue").style.visibility = "hidden";
-  document.getElementById("inGameMenueContainer").style.visibility = "visible";
+  //HIDE MENU
+  document.getElementById("menu").style.visibility = "hidden";
+  document.getElementById("inGameMenuContainer").style.visibility = "visible";
 
   //MOVE CAMERA
   transitionLocation.set( -700 , 200, -500 );
