@@ -6,8 +6,10 @@ h1 {
   color: "black";
   text-align: center;
 }
+
+
 canvas {
-  background: green;
+  background: white;
 }
 
 #over3D {
@@ -34,9 +36,8 @@ canvas {
   margin-right: 3vw;
 }
 
-#playButton {
+#playButton, .boardSizeBtn {
   width: 10vw;
-  margin-top: 8vh;
   margin-left: auto;
   margin-right: auto;
 
@@ -51,10 +52,19 @@ canvas {
   border-color: rgba(200, 200, 200, 0.5);
 }
 
-#playButton:hover {
+#playButton:hover, .boardSizeBtn:hover {
   background-color: rgba(242, 242, 242, 0.7);
   border-color: rgba(200, 200, 200, 0.7);
 }
+
+#sizeBox {
+  display: flex;
+  justify-content: space-between;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 
 /*---------------- CSS for inGameMenu-----------*/
 
@@ -78,7 +88,6 @@ canvas {
   text-align: right;
 }
 
-
 .contentButton {
   display: none;
   z-index: 2;
@@ -90,6 +99,9 @@ canvas {
   padding-bottom: 6px;
   border-bottom: 1px solid;
   border-color: rgba(200, 200, 200, 0.5);
+}
+.selected {
+  background-color: rgba(242, 242, 242, 0.7);
 }
 
 .contentButton:hover {

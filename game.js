@@ -5,7 +5,10 @@ var INTERSECTED;
 var elapsedFrames = 900;
 var inPlay = false //variable that switches from menu to play
 var frameCount = 0;
-
+var lineSpacingGlobal;
+var controls = null;
+var boardSize = 13;
+var lockScreen = false;
 var transitionCamera = false;
 var transitionLocation = new THREE.Vector3();
 var transitionSpeed = 0.03;
@@ -53,13 +56,6 @@ scene.background = textureCube;
 camera = new THREE.PerspectiveCamera( 45.0, window.innerWidth / window.innerHeight, 0.1, 10000 );
 camera.position.set( -100, 0, 500 );
 
-//ADD MOVEMENT CONTROLS
-var controls = null;
-// controls.target.set( 0, -200, -500 );
-// controls.update();
-// controls.enabled = false;
-
-
 //GO BOARD BASE
 var boardZ = 500;
 var boardX = boardZ;
@@ -78,92 +74,27 @@ var boardMesh = new THREE.Mesh(boardGeometry, boardMaterial);
 boardMesh.position.set(0, -200 - boardY / 2, -500);
 goBoard.add( boardMesh );
 
-
 //GO BOARD LINES
 var goLines = new THREE.Group();
-var rows = 9; //ADJUST
-var columns = rows;
 var lineWidth = 1; //ADJUST
 var lineLengthLong = 450; //ADJUST
-var lineSpacing = (lineLengthLong - lineWidth) / (rows - 1);
-var lineLengthShort = lineSpacing - lineWidth;
-var lineStartX = -225; //ADJUST
-var lineStartY = -199; //ADJUST
-var lineStartZ = -725; //ADJUST
-var lineX;
-var lineY;
-var lineZ;
-var selectionSpotX;
-var selectionSpotZ;
+var lineStart = new THREE.Vector3(-225, -199, -725);
 
 //lines material
 var materialLine = new THREE.MeshStandardMaterial({
-	color: 0x000000,
-	roughness: 0.8,
-	metalness: 0.01
+  color: 0x000000,
+  roughness: 0.8,
+  metalness: 0.01
 });
 
-//create lines
-for ( var c = 0; c < columns; c++ ) {
-	//add long lines
-	//add geometry
-	var geometryLine = new THREE.PlaneGeometry(lineWidth, lineLengthLong);
-
-	//add mesh
-	var meshLine = new THREE.Mesh(geometryLine, materialLine);
-
-	//rotate plan flat
-	meshLine.rotation.x = degToRad(-90);
-
-	//position mesh
-	lineX = lineStartX + lineWidth / 2 + lineSpacing * c;
-	lineY = lineStartY;
-	lineZ = lineStartZ + lineLengthLong / 2;
-	meshLine.position.set(lineX, lineY, lineZ);
-
-	//add mesh to goLines group
-	goLines.add(meshLine);
-
-	//ADD SELECTION POINTS
-	for ( var r = 0; r < rows; r++ ) {
-		//r and c
-		selectionSpotX = lineStartX + lineWidth / 2 + lineSpacing * c;
-		selectionSpotZ = lineStartZ + lineWidth / 2 + lineSpacing * r;
-		addSelectionSpot(selectionSpotX, -198, selectionSpotZ, selectorGroup, lineSpacing / 2);
-	}
-
-	//ADD SHORT LINES
-	//only short lines if this is not the last line
-	if (c < columns - 1) {
-		for ( var r = 0; r < rows; r++ ) {
-			//add geometry
-			var geometryLine = new THREE.PlaneGeometry(lineLengthShort, lineWidth);
-
-			//add mesh
-			var meshLine = new THREE.Mesh(geometryLine, materialLine);
-
-			//rotate plan flat
-			meshLine.rotation.x = degToRad(-90);
-
-			//position mesh
-			lineX = lineStartX + lineLengthShort / 2 + lineWidth + lineSpacing * c;
-			lineY = lineStartY;
-			lineZ = lineStartZ + lineWidth / 2 + lineSpacing * r;
-			meshLine.position.set(lineX, lineY, lineZ);
-
-			//add mesh to goLines group
-			goLines.add(meshLine);
-		}
-	};
-}
-
-//add goLines to scene
-scene.add(goLines);
+// (lineCount, material, lineWidth, startPositionVector, length, group)
+adjustBoardSize(13, materialLine, lineWidth, lineStart, lineLengthLong, goLines);
 
 //Add GROUPS TO SCENE
 scene.add(goBoard);
 scene.add(selectorGroup);
 scene.add(goPiecesGroup);
+scene.add(goLines);
 
 //SHADOWS
 /*
@@ -175,14 +106,34 @@ light3.position.y = 200;
 light.target = mesh;
 */
 
-
 //ADD EVENT LISTENERs
+//gameboard interaction
 window.addEventListener( 'mousemove', onMouseMove, false );
 document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
+//menu interactions
 document.getElementById("playButton").addEventListener( 'mousedown', playButtonPressed, false );
 document.getElementById("ViewTopBtn").addEventListener( 'mousedown', viewTop, false );
 document.getElementById("ResetGameBtn").addEventListener( 'mousedown', resetGame, false );
 document.getElementById("ResetCameraBtn").addEventListener( 'mousedown', resetCamera, false );
+document.getElementById("lockScreenBtn").addEventListener( 'mousedown', toggleLockScreen, false );
+
+//board size selection
+document.getElementById("board9").addEventListener(
+   'mousedown',
+   btnAdjustBoardSize9,
+   false
+ );
+document.getElementById("board13").addEventListener(
+  'mousedown',
+  btnAdjustBoardSize13,
+  false
+);
+document.getElementById("board19").addEventListener(
+  'mousedown',
+  btnAdjustBoardSize19,
+  false
+);
 
 //RENDER LOOP
 requestAnimationFrame(render);
@@ -232,12 +183,12 @@ function addPiece (x, z, radius, colorHex, group) {
 		metalness: 0.01
 	});
 	var meshPiece = new THREE.Mesh(geometryPiece, materialPiece);
-	meshPiece.position.set(x, -198 + zScale * (lineSpacing / 2), z);
+	meshPiece.position.set(x, -198 + zScale * (lineSpacingGlobal / 2), z);
 	group.add(meshPiece);
 }
 
 function addSelectionSpot (x, y, z, group, radius){
-	var geometryHighlight = new THREE.CircleGeometry(lineSpacing / 2, 20);
+	var geometryHighlight = new THREE.CircleGeometry(lineSpacingGlobal / 2, 20);
   var materialHighlight = new THREE.MeshLambertMaterial({
 		color: 0xb3e6ff,
 		side: THREE.FrontSide,
@@ -267,7 +218,7 @@ function onDocumentMouseDown (element) {
   		goPiecesGroup.remove(INTERSECTED);
 
   		//Add selection Spot in place of Tile
-  		addSelectionSpot(INTERSECTED.position.x, -198, INTERSECTED.position.z, selectorGroup, lineSpacing / 2);
+  		addSelectionSpot(INTERSECTED.position.x, -198, INTERSECTED.position.z, selectorGroup, lineSpacingGlobal / 2);
   	};
 
   	//FOR ADDING PIECE TO BOARD
@@ -280,7 +231,7 @@ function onDocumentMouseDown (element) {
   		addPiece(
           INTERSECTED.position.x,
           INTERSECTED.position.z,
-          lineSpacing / 2.3,
+          lineSpacingGlobal / 2.3,
           colorTracker,
           goPiecesGroup
       );
@@ -410,14 +361,21 @@ function graduallyMoveCamera (camera, location, target, percentDistPerFrame) {
     transitionCamera = false;
 
     //ADD MOVEMENT CONTROLS
-    controls = new THREE.OrbitControls( camera );
-    controls.target.set( 0, -200, -500 );
-    controls.update();
-    controls.enabled = true;
+    //check if lockscreen is false
+    if(lockScreen == false) {
+      controls = new THREE.OrbitControls( camera );
+      controls.target.set( 0, -200, -500 );
+      controls.update();
+      controls.enabled = true;
+    };
   };
 }
 
 function viewTop () {
+  if(lockScreen == true){
+    toggleLockScreen();
+  };
+
   //MOVE CAMERA
   controls.target.set( 0, -200, -500 );
   transitionLocation.set( -92 , 600, -500 );
@@ -425,11 +383,13 @@ function viewTop () {
 }
 
 function resetGame () {
-  //delete pieces
-  var pieces = goPiecesGroup.children;
-  while (pieces.length > 0) {
-    goPiecesGroup.remove(pieces[0]);
-  }
+  window.location.reload();
+}
+
+function resetCamera () {
+  if(lockScreen == true){
+    toggleLockScreen();
+  };
 
   //Move Camera to starting position
   controls.target.set( 0, -200, -500 );
@@ -437,9 +397,155 @@ function resetGame () {
   transitionCamera = true;
 }
 
-function resetCamera () {
-  //Move Camera to starting position
-  controls.target.set( 0, -200, -500 );
-  transitionLocation.set( -700 , 200, -500 );
-  transitionCamera = true;
+function toggleLockScreen () {
+
+  //turn off movement controls
+  if(lockScreen == false){
+    if (controls != null){
+      controls.enabled = false;
+      controls = null;
+    };
+    //modify global variable
+    lockScreen = true;
+
+    document.getElementById('lockScreenBtn').innerHTML = "UnLock Screen";
+  } else {
+    if(controls == null) {
+      controls = new THREE.OrbitControls( camera );
+      controls.target.set( 0, -200, -500 );
+      controls.update();
+      controls.enabled = true;
+    };
+    //modify global variable
+    lockScreen = false;
+
+    document.getElementById('lockScreenBtn').innerHTML = "Lock Screen";
+  };
+}
+
+function btnAdjustBoardSize9 (element) {
+  //preventDefault
+  element.preventDefault();
+
+  //Remove Class "selected" from all buttons then add to this one
+  var elem = document.getElementsByClassName("boardSizeBtn");
+  for (var i = 0; i < elem.length; i++) {
+    elem[i].classList.remove('selected');
+  }
+
+  document.getElementById("board9").classList.toggle('selected');
+
+  //call adjust board function
+  adjustBoardSize (9, materialLine, lineWidth, lineStart, lineLengthLong, goLines);
+}
+
+function btnAdjustBoardSize13 (element) {
+  // //preventDefault
+  element.preventDefault();
+
+  //Remove Class "selected" from all buttons then add to this one
+  var elem = document.getElementsByClassName("boardSizeBtn");
+  for (var i = 0; i < elem.length; i++) {
+    elem[i].classList.remove('selected');
+  }
+  document.getElementById("board13").classList.toggle('selected');
+
+  //call adjust board function
+  adjustBoardSize (13, materialLine, lineWidth, lineStart, lineLengthLong, goLines);
+}
+
+function btnAdjustBoardSize19 (element) {
+  // //preventDefault
+  element.preventDefault();
+
+  //Remove Class "selected" from all buttons then add to this one
+  var elem = document.getElementsByClassName("boardSizeBtn");
+  for (var i = 0; i < elem.length; i++) {
+    elem[i].classList.remove('selected');
+  }
+  document.getElementById("board19").classList.toggle('selected');
+
+  //call adjust board function
+  adjustBoardSize (19, materialLine, lineWidth, lineStart, lineLengthLong, goLines);
+}
+
+function adjustBoardSize (lineCount, material, lineWidth, startPositionVector, length, group) {
+  var rows = lineCount;
+  var columns = rows;
+  var lineSpacingLoc = (length - lineWidth) / (rows - 1);
+  lineSpacingGlobal = lineSpacingLoc;
+  var lineLengthShort = lineSpacingLoc - lineWidth;
+  var lineX;
+  var lineY;
+  var lineZ;
+  var selectionSpotX;
+  var selectionSpotZ;
+
+  //DELETE CURRENT GRID
+  var deleteLine = group.children;
+  while (deleteLine.length > 0) {
+    group.remove(deleteLine[0]);
+  }
+
+  //REMOVE SELECTION SPOTS
+  var deleteSpot = selectorGroup.children;
+  while (deleteSpot.length > 0) {
+    selectorGroup.remove(deleteSpot[0]);
+  }
+
+  //ADD NEW GRID
+  //create lines
+  for ( var c = 0; c < columns; c++ ) {
+  	//add long lines
+  	//add geometry
+  	var geometryLine = new THREE.PlaneGeometry(lineWidth, length);
+
+  	//add mesh
+  	var meshLine = new THREE.Mesh(geometryLine, material);
+
+  	//rotate plan flat
+  	meshLine.rotation.x = degToRad(-90);
+
+  	//position mesh
+  	lineX = startPositionVector.x + lineWidth / 2 + lineSpacingLoc * c;
+  	lineY = startPositionVector.y;
+  	lineZ = startPositionVector.z + length / 2;
+  	meshLine.position.set(lineX, lineY, lineZ);
+
+  	//add mesh to goLines group
+  	group.add(meshLine);
+
+  	//ADD SELECTION POINTS
+  	for ( var r = 0; r < rows; r++ ) {
+  		//r and c
+  		selectionSpotX = startPositionVector.x + lineWidth / 2 + lineSpacingLoc * c;
+  		selectionSpotZ = startPositionVector.z + lineWidth / 2 + lineSpacingLoc * r;
+  		addSelectionSpot(selectionSpotX, -198, selectionSpotZ, selectorGroup, lineSpacingLoc / 2);
+  	}
+
+  	//ADD SHORT LINES
+  	//only short lines if this is not the last line
+  	if (c < columns - 1) {
+  		for ( var r = 0; r < rows; r++ ) {
+  			//add geometry
+  			var geometryLine = new THREE.PlaneGeometry(lineLengthShort, lineWidth);
+
+  			//add mesh
+  			var meshLine = new THREE.Mesh(geometryLine, material);
+
+  			//rotate plan flat
+  			meshLine.rotation.x = degToRad(-90);
+
+  			//position mesh
+  			lineX = startPositionVector.x + lineLengthShort / 2 + lineWidth + lineSpacingLoc * c;
+  			lineY = startPositionVector.y;
+  			lineZ = startPositionVector.z + lineWidth / 2 + lineSpacingLoc * r;
+  			meshLine.position.set(lineX, lineY, lineZ);
+
+  			//add mesh to goLines group
+  			group.add(meshLine);
+  		}
+  	};
+  }
+
 }
