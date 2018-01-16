@@ -13,6 +13,7 @@ var transitionCamera = false;
 var transitionLocation = new THREE.Vector3();
 var transitionSpeed = 0.03;
 var transitionCameraTarget = new THREE.Vector3( 0, -200, -500 );
+var materialOption = 1;
 
 //RENDERER
 var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
@@ -70,6 +71,7 @@ var boardMaterial = new THREE.MeshLambertMaterial({
 	//bumpMap: new THREE.TextureLoader().load('marbel.jpg'),
 	//bumpScale: 1,
 });
+
 var boardMesh = new THREE.Mesh(boardGeometry, boardMaterial);
 boardMesh.position.set(0, -200 - boardY / 2, -500);
 goBoard.add( boardMesh );
@@ -117,6 +119,7 @@ document.getElementById("ViewTopBtn").addEventListener( 'mousedown', viewTop, fa
 document.getElementById("ResetGameBtn").addEventListener( 'mousedown', resetGame, false );
 document.getElementById("ResetCameraBtn").addEventListener( 'mousedown', resetCamera, false );
 document.getElementById("lockScreenBtn").addEventListener( 'mousedown', toggleLockScreen, false );
+document.getElementById("MaterialBtn").addEventListener( 'mousedown', boardStyle, false );
 
 //board size selection
 document.getElementById("board9").addEventListener(
@@ -547,5 +550,48 @@ function adjustBoardSize (lineCount, material, lineWidth, startPositionVector, l
   		}
   	};
   }
+
+}
+
+function boardStyle () {
+
+
+
+  if(materialOption == 1){
+    var boardWoodMaterial = new THREE.MeshLambertMaterial({
+    	color: 0xffffff,
+    	envMap: textureCube,
+    	combine: THREE.MixOperation,
+    	reflectivity: 0.1,
+    	map: new THREE.TextureLoader().load('wood.jpg'),
+    });
+    boardMesh.material = boardWoodMaterial;
+    materialOption += 1;
+
+  } else if (materialOption == 2) {
+    var boardDarkWoodMaterial = new THREE.MeshLambertMaterial({
+    	color: 0xffffff,
+    	envMap: textureCube,
+    	combine: THREE.MixOperation,
+    	reflectivity: 0.1,
+    	map: new THREE.TextureLoader().load('darkWood.jpg'),
+    });
+    boardMesh.material = boardDarkWoodMaterial;
+    materialOption += 1;
+
+  } else if (materialOption == 3) {
+    var boardSlateMaterial = new THREE.MeshLambertMaterial({
+    	color: 0xffffff,
+    	map: new THREE.TextureLoader().load('slate.jpg'),
+      bumpMap: new THREE.TextureLoader().load('slate.jpg'),
+    });
+    boardMesh.material = boardSlateMaterial;
+    materialOption += 1;
+
+  } else if (materialOption == 4) {
+    boardMesh.material = boardMaterial;
+    materialOption = 1;
+  }
+
 
 }
